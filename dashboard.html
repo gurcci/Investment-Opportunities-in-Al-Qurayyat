@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة التحكم - خريطة الفرص الاستثمارية</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --primary:#1a5276; --primary-light:#2980b9; --accent:#c0392b;
+    --gold:#d4a017; --bg:#f0f4f8; --white:#fff;
+    --text:#2c3e50; --text-light:#7f8c8d; --border:#dce1e7;
+    --shadow:0 4px 20px rgba(0,0,0,0.1); --radius:12px;
+    --success:#27ae60; --warning:#f39c12; --danger:#e74c3c;
+    --sidebar-w:260px;
+  }
+  body { font-family:'Tajawal',sans-serif; direction:rtl; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  /* LOGIN */
+  #login-wrap {
+    position:fixed; inset:0; background:linear-gradient(135deg,#1a5276,#154360,#0d2137);
+    display:flex; align-items:center; justify-content:center; z-index:9999;
+  }
+  #login-wrap.hide { display:none; }
+  .login-card {
+    background:#fff; border-radius:20px; padding:40px; width:380px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.4); text-align:center;
+  }
+  .login-icon { font-size:48px; color:var(--primary); margin-bottom:16px; }
+  .login-card h2 { font-size:22px; font-weight:800; color:var(--primary); margin-bottom:6px; }
+  .login-card p { font-size:13px; color:var(--text-light); margin-bottom:28px; }
+  .login-field { margin-bottom:16px; text-align:right; }
+  .login-field label { font-size:13px; color:var(--text-light); display:block; margin-bottom:6px; }
+  .login-field input {
+    width:100%; padding:12px 14px; border:1px solid var(--border);
+    border-radius:10px; font-family:'Tajawal',sans-serif; font-size:14px; outline:none;
+    transition:border-color 0.2s;
+  }
+  .login-field input:focus { border-color:var(--primary-light); }
+  .login-btn {
+    width:100%; padding:13px; background:var(--primary); color:#fff; border:none;
+    border-radius:10px; font-family:'Tajawal',sans-serif; font-size:15px; font-weight:700;
+    cursor:pointer; transition:background 0.2s; margin-top:8px;
+  }
+  .login-btn:hover { background:var(--primary-light); }
+  .login-hint { font-size:12px; color:var(--text-light); margin-top:14px; }
+  .login-err { background:#fdeaea; color:var(--danger); padding:10px; border-radius:8px; font-size:13px; margin-top:10px; display:none; }
+
+  /* DASHBOARD LAYOUT */
+  #dash { display:flex; min-height:100vh; }
+
+  /* SIDEBAR */
+  .d-sidebar {
+    width:var(--sidebar-w); background:var(--primary); position:fixed;
+    top:0; right:0; bottom:0; display:flex; flex-direction:column; z-index:200;
+    overflow:hidden; transition:width 0.3s;
+  }
+  .d-sidebar.mini { width:64px; }
+
+  .ds-brand {
+    padding:20px 16px; display:flex; align-items:center; gap:12px;
+    border-bottom:1px solid rgba(255,255,255,0.15); color:#fff; overflow:hidden; white-space:nowrap;
+  }
+  .ds-brand i { font-size:24px; color:var(--gold); flex-shrink:0; }
+  .ds-brand-text h2 { font-size:15px; font-weight:800; }
+  .ds-brand-text p { font-size:11px; opacity:0.7; }
+
+  .ds-menu { flex:1; padding:12px 8px; overflow-y:auto; }
+  .ds-item {
+    display:flex; align-items:center; gap:12px; padding:11px 12px;
+    border-radius:10px; cursor:pointer; margin-bottom:4px; color:rgba(255,255,255,0.8);
+    font-size:14px; transition:all 0.2s; white-space:nowrap; overflow:hidden;
+    border:none; background:none; width:100%; text-align:right; font-family:'Tajawal',sans-serif;
+  }
+  .ds-item i { font-size:18px; flex-shrink:0; }
+  .ds-item:hover, .ds-item.active { background:rgba(255,255,255,0.15); color:#fff; }
+  .ds-item.active { background:rgba(255,255,255,0.2); font-weight:700; }
+  .ds-item.danger:hover { background:rgba(231,76,60,0.3); color:#fff; }
+
+  .ds-footer { padding:12px 8px; border-top:1px solid rgba(255,255,255,0.15); }
+
+  .mini-toggle {
+    background:rgba(255,255,255,0.1); border:none; width:100%; padding:10px;
+    border-radius:10px; color:#fff; cursor:pointer; font-size:16px; transition:background 0.2s;
+  }
+  .mini-toggle:hover { background:rgba(255,255,255,0.2); }
+
+  /* MAIN */
+  .d-main { margin-right:var(--sidebar-w); flex:1; display:flex; flex-direction:column; transition:margin-right 0.3s; }
+  .d-main.mini-mode { margin-right:64px; }
+
+  /* TOPBAR */
+  .d-topbar {
+    background:#fff; padding:0 24px; height:64px; display:flex;
+    align-items:center; justify-content:space-between;
+    border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100;
+  }
+  .topbar-title { font-size:18px; font-weight:700; color:var(--primary); }
+  .topbar-right { display:flex; align-items:center; gap:16px; }
+  .topbar-badge {
+    background:var(--primary); color:#fff; border-radius:20px;
+    padding:5px 14px; font-size:13px; font-weight:600;
+  }
+  .topbar-user { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-light); }
+  .topbar-user i { font-size:28px; color:var(--primary); }
+  .back-btn {
+    background:var(--bg); border:1px solid var(--border); color:var(--text);
+    padding:8px 14px; border-radius:8px; font-family:'Tajawal',sans-serif;
+    font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; text-decoration:none;
+  }
+  .back-btn:hover { background:var(--border); }
+
+  /* CONTENT */
+  .d-content { padding:24px; flex:1; }
+
+  /* SECTION */
+  .section { display:none; }
+  .section.active { display:block; }
+
+  /* STAT CARDS */
+  .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .stat-box {
+    background:#fff; border-radius:var(--radius); padding:20px;
+    box-shadow:var(--shadow); display:flex; align-items:center; gap:16px;
+    border-bottom:4px solid transparent; transition:transform 0.2s;
+  }
+  .stat-box:hover { transform:translateY(-2px); }
+  .stat-box-icon {
+    width:52px; height:52px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center; font-size:22px; color:#fff; flex-shrink:0;
+  }
+  .stat-box .val { font-size:28px; font-weight:800; color:var(--text); }
+  .stat-box .lbl { font-size:12px; color:var(--text-light); }
+
+  /* CHARTS ROW */
+  .charts-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+  .chart-card { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+  .chart-card h3 { font-size:15px; font-weight:700; color:var(--primary); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+  .chart-card h3 i { color:var(--gold); }
+
+  /* TABLE CARD */
+  .table-card { background:#fff; border-radius:var(--radius); padding:20px; box-shadow:var(--shadow); }
+  .table-toolbar {
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px;
+  }
+  .table-toolbar h3 { font-size:15px; font-weight:700; color:var(--primary); display:flex; align-items:center; gap:8px; }
+  .table-toolbar h3 i { color:var(--gold); }
+  .table-actions { display:flex; gap:10px; align-items:center; }
+  .search-input {
+    padding:8px 14px; border:1px solid var(--border); border-radius:8px;
+    font-family:'Tajawal',sans-serif; font-size:13px; outline:none; width:220px;
+  }
+  .search-input:focus { border-color:var(--primary-light); }
+  .btn-add {
+    background:var(--primary); color:#fff; border:none; padding:9px 18px;
+    border-radius:8px; font-family:'Tajawal',sans-serif; font-size:13px; font-weight:600;
+    cursor:pointer; display:flex; align-items:center; gap:6px; transition:background 0.2s;
+  }
+  .btn-add:hover { background:var(--primary-light); }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  thead th { background:var(--bg); padding:12px 14px; text-align:right; font-weight:700; color:var(--text-light); border-bottom:2px solid var(--border); white-space:nowrap; }
+  tbody td { padding:12px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tbody tr:hover { background:#f8fbff; }
+  tbody tr:last-child td { border-bottom:none; }
+  .tbl-badge {
+    display:inline-block; padding:4px 12px; border-radius:20px; font-size:11px;
+    font-weight:600; color:#fff;
+  }
+  .status-badge {
+    display:inline-block; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600;
+  }
+  .status-avail { background:#eafaf1; color:var(--success); }
+  .status-reserved { background:#fef9e7; color:var(--warning); }
+  .tbl-actions { display:flex; gap:6px; }
+  .tbl-btn {
+    width:30px; height:30px; border-radius:6px; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:13px; transition:all 0.2s;
+  }
+  .tbl-btn.edit { background:#eaf4fd; color:var(--primary-light); }
+  .tbl-btn.edit:hover { background:var(--primary-light); color:#fff; }
+  .tbl-btn.del { background:#fdeaea; color:var(--danger); }
+  .tbl-btn.del:hover { background:var(--danger); color:#fff; }
+  .tbl-btn.view { background:#eafaf1; color:var(--success); }
+  .tbl-btn.view:hover { background:var(--success); color:#fff; }
+
+  .empty-row td { text-align:center; padding:40px; color:var(--text-light); }
+  .empty-row i { font-size:36px; display:block; margin-bottom:10px; }
+
+  /* PAGINATION */
+  .pagination { display:flex; justify-content:center; gap:6px; margin-top:16px; }
+  .page-btn {
+    width:36px; height:36px; border:1px solid var(--border); border-radius:8px;
+    background:#fff; cursor:pointer; font-family:'Tajawal',sans-serif; font-size:13px;
+    display:flex; align-items:center; justify-content:center; transition:all 0.2s;
+  }
+  .page-btn:hover, .page-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+  /* MODAL */
+  .modal-backdrop {
+    position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    opacity:0; pointer-events:none; transition:opacity 0.3s;
+  }
+  .modal-backdrop.show { opacity:1; pointer-events:all; }
+  .modal {
+    background:#fff; border-radius:var(--radius); width:100%; max-width:560px;
+    max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.3);
+    transform:translateY(20px); transition:transform 0.3s;
+  }
+  .modal-backdrop.show .modal { transform:translateY(0); }
+  .modal-header {
+    background:var(--primary); color:#fff; padding:18px 20px;
+    display:flex; justify-content:space-between; align-items:center;
+    position:sticky; top:0; border-radius:var(--radius) var(--radius) 0 0;
+  }
+  .modal-header h3 { font-size:16px; font-weight:700; }
+  .modal-close { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; }
+  .modal-body { padding:20px; }
+  .modal-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .modal-grid .full { grid-column:1/-1; }
+  .field-group { display:flex; flex-direction:column; gap:5px; }
+  .field-group label { font-size:12px; color:var(--text-light); font-weight:600; }
+  .field-group input, .field-group select, .field-group textarea {
+    padding:10px 12px; border:1px solid var(--border); border-radius:8px;
+    font-family:'Tajawal',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s;
+  }
+  .field-group input:focus, .field-group select:focus, .field-group textarea:focus { border-color:var(--primary-light); }
+  .field-group textarea { resize:vertical; min-height:80px; }
+  .modal-footer { padding:16px 20px; border-top:1px solid var(--border); display:flex; gap:10px; justify-content:flex-end; }
+  .btn-save { background:var(--primary); color:#fff; border:none; padding:10px 24px; border-radius:8px; font-family:'Tajawal',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+  .btn-save:hover { background:var(--primary-light); }
+  .btn-cancel { background:var(--bg); color:var(--text); border:1px solid var(--border); padding:10px 24px; border-radius:8px; font-family:'Tajawal',sans-serif; font-size:14px; cursor:pointer; }
+
+  /* CONFIRM MODAL */
+  .confirm-modal { max-width:400px; text-align:center; }
+  .confirm-icon { font-size:48px; color:var(--danger); margin:20px 0 10px; }
+  .confirm-modal h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+  .confirm-modal p { color:var(--text-light); font-size:14px; margin-bottom:20px; }
+  .btn-danger { background:var(--danger); color:#fff; border:none; padding:10px 24px; border-radius:8px; font-family:'Tajawal',sans-serif; font-size:14px; font-weight:600; cursor:pointer; }
+
+  /* TOAST */
+  .toast-wrap { position:fixed; bottom:24px; left:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+  .toast {
+    background:#fff; border-radius:10px; padding:14px 18px; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:10px; font-size:13px; min-width:260px;
+    border-right:4px solid var(--success); transform:translateX(-120%); transition:transform 0.3s;
+  }
+  .toast.show { transform:translateX(0); }
+  .toast.error { border-right-color:var(--danger); }
+  .toast.warning { border-right-color:var(--warning); }
+  .toast i { font-size:18px; }
+  .toast.show i { color:var(--success); }
+  .toast.error i { color:var(--danger); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:5px; }
+
+  @media(max-width:900px) {
+    .stat-grid { grid-template-columns:repeat(2,1fr); }
+    .charts-row { grid-template-columns:1fr; }
+  }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon"><i class="fas fa-shield-halved"></i></div>
+    <h2>لوحة التحكم</h2>
+    <p>تسجيل الدخول للوصول إلى إدارة الفرص الاستثمارية</p>
+    <div class="login-field">
+      <label>اسم المستخدم</label>
+      <input type="text" id="l-user" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>كلمة المرور</label>
+      <input type="password" id="l-pass" autocomplete="current-password">
+    </div>
+    <button class="login-btn" id="login-btn"><i class="fas fa-sign-in-alt"></i> دخول</button>
+    <div class="login-err" id="l-err"><i class="fas fa-exclamation-circle"></i> اسم المستخدم أو كلمة المرور غير صحيحة</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash">
+  <!-- SIDEBAR -->
+  <div class="d-sidebar" id="d-sidebar">
+    <div class="ds-brand">
+      <img src="imge/غرفة القريات2.png" alt="شعار غرفة القريات" style="width: 130px;height: 30px;">
+      <div class="ds-brand-text">
+        <h2>لوحة التحكم</h2>
+        <p>القريات - منطقة الجوف</p>
+      </div>
+    </div>
+    <div class="ds-menu">
+      <button class="ds-item active" onclick="showSection('overview',this)"><i class="fas fa-chart-line"></i><span>نظرة عامة</span></button>
+      <button class="ds-item" onclick="showSection('opportunities',this)"><i class="fas fa-map-pin"></i><span>الفرص الاستثمارية</span></button>
+      <button class="ds-item" onclick="showSection('reports',this)"><i class="fas fa-file-chart-column"></i><span>التقارير</span></button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="d-main" id="d-main">
+
+    <!-- TOPBAR -->
+    <div class="d-topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="topbar-title" id="topbar-title">نظرة عامة</div>
+        <span class="topbar-badge" id="topbar-badge">لوحة التحكم</span>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-user">
+          <span>مدير النظام</span>
+          <i class="fas fa-circle-user" style="font-size: 15px;margin: 2px;letter-spacing: 2px;">AL QURAYAT CHAMBER</i>
+        </div>
+        <button class="back-btn" onclick="doLogout()" style="color:var(--danger)"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="d-content">
+
+      <!-- OVERVIEW -->
+      <div class="section active" id="s-overview">
+        <div class="stat-grid">
+          <div class="stat-box" style="border-bottom-color:var(--primary)">
+            <div class="stat-box-icon" style="background:var(--primary)"><i class="fas fa-map-pin"></i></div>
+            <div><div class="val" id="ov-total">0</div><div class="lbl">إجمالي الفرص</div></div>
+          </div>
+
+          <div class="stat-box" style="border-bottom-color:var(--success)">
+            <div class="stat-box-icon" style="background:var(--success)"><i class="fas fa-check-circle"></i></div>
+            <div><div class="val" id="ov-avail">0</div><div class="lbl">فرص متاحة</div></div>
+          </div>
+
+          <div class="stat-box" style="border-bottom-color:var(--warning)">
+            <div class="stat-box-icon" style="background:var(--warning)"><i class="fas fa-clock"></i></div>
+            <div><div class="val" id="ov-reserved">0</div><div class="lbl">فرص محجوزة</div></div>
+          </div>
+
+          <div class="stat-box" style="border-bottom-color:var(--gold)">
+            <div class="stat-box-icon" style="background:var(--gold)"><i class="fas fa-ruler-combined"></i></div>
+            <div><div class="val" id="ov-area">0</div><div class="lbl">متوسط المساحة للمشروع الواحد</div></div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="chart-card">
+            <h3><i class="fas fa-chart-pie"></i> توزيع الفرص حسب النشاط</h3>
+            <canvas id="chart-activity" height="220"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3><i class="fas fa-chart-bar"></i> توزيع الفرص حسب الحي</h3>
+            <canvas id="chart-hood" height="220"></canvas>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-toolbar">
+            <h3><i class="fas fa-star"></i> أحدث الفرص المضافة</h3>
+          </div>
+          <table>
+            <thead><tr>
+              <th>رقم الفرصة</th><th>الحي</th><th>النشاط</th><th>المساحة</th><th>الحالة</th>
+            </tr></thead>
+            <tbody id="latest-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- OPPORTUNITIES -->
+      <div class="section" id="s-opportunities">
+        <div class="table-card">
+          <div class="table-toolbar">
+            <h3><i class="fas fa-map-pin"></i> إدارة الفرص الاستثمارية</h3>
+            <div class="table-actions">
+              <input type="text" class="search-input" id="tbl-search" placeholder="بحث..." oninput="renderTable()">
+              <select class="search-input" id="tbl-filter-act" style="width:130px" onchange="renderTable()">
+                <option value="">كل الأنشطة</option>
+              </select>
+              <button class="btn-add" onclick="openModal()"><i class="fas fa-plus"></i> إضافة فرصة</button>
+              <button class="btn-add" onclick="openDelAllModal()" style="background:var(--danger)"><i class="fas fa-trash-can"></i> مسح الكل</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr>
+              <th>#</th><th>رقم الفرصة</th><th>الحي</th><th>النشاط</th>
+              <th>المساحة</th><th>مدة العقد</th><th>الحالة</th><th>إجراءات</th>
+            </tr></thead>
+            <tbody id="opp-tbody"></tbody>
+          </table>
+          <div class="pagination" id="pagination"></div>
+        </div>
+      </div>
+
+      <!-- REPORTS -->
+      <div class="section" id="s-reports">
+        <div class="charts-row" style="margin-bottom:0">
+          <div class="chart-card">
+            <h3><i class="fas fa-chart-area"></i> المساحة حسب النشاط</h3>
+            <canvas id="chart-area" height="240"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3><i class="fas fa-chart-column"></i> الفرص حسب الحالة والحي</h3>
+            <canvas id="chart-status-hood" height="240"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-backdrop" id="opp-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title"><i class="fas fa-plus-circle"></i> إضافة فرصة جديدة</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="m-id">
+      <div class="modal-grid">
+        <div class="field-group">
+          <label>رقم الفرصة *</label>
+          <input type="text" id="m-number" placeholder="QR-2024-001">
+        </div>
+        <div class="field-group">
+          <label>النشاط *</label>
+          <select id="m-activity"></select>
+        </div>
+        <div class="field-group">
+          <label>الحي *</label>
+          <select id="m-hood"></select>
+        </div>
+        <div class="field-group">
+          <label>المساحة (م²) *</label>
+          <input type="number" id="m-area" placeholder="1000">
+        </div>
+        <div class="field-group">
+          <label>مدة العقد</label>
+          <input type="text" id="m-duration" placeholder="10 سنوات">
+        </div>
+        <div class="field-group">
+          <label>سعر الكراسة (ر.س)</label>
+          <input type="number" id="m-docs" placeholder="500">
+        </div>
+        <div class="field-group">
+          <label>تاريخ الإعلان</label>
+          <input type="date" id="m-announce">
+        </div>
+        <div class="field-group">
+          <label>تاريخ فتح المظاريف</label>
+          <input type="date" id="m-tender">
+        </div>
+        <div class="field-group">
+          <label>خط العرض (Latitude)</label>
+          <input type="number" id="m-lat" step="0.0001" placeholder="31.3350">
+        </div>
+        <div class="field-group">
+          <label>خط الطول (Longitude)</label>
+          <input type="number" id="m-lng" step="0.0001" placeholder="37.3600">
+        </div>
+        <div class="field-group">
+          <label>الحالة</label>
+          <select id="m-status">
+            <option value="متاح">متاح</option>
+            <option value="محجوز">محجوز</option>
+          </select>
+        </div>
+        <div class="field-group full">
+          <label>وصف الفرصة</label>
+          <textarea id="m-desc" placeholder="وصف تفصيلي للفرصة الاستثمارية..."></textarea>
+        </div>
+        <div class="field-group full">
+          <label>رابط الفرصة</label>
+          <textarea id="m-link" placeholder="رابط الفرصة الاستثمارية او رابط واتساب..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveOpp()"><i class="fas fa-save"></i> حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="modal-backdrop" id="del-modal">
+  <div class="modal confirm-modal">
+    <div class="confirm-icon"><i class="fas fa-trash-can"></i></div>
+    <h3>تأكيد الحذف</h3>
+    <p>هل أنت متأكد من حذف هذه الفرصة؟ لا يمكن التراجع عن هذا الإجراء.</p>
+    <div style="display:flex;gap:10px;justify-content:center;padding-bottom:20px">
+      <button class="btn-cancel" onclick="closeDelModal()">إلغاء</button>
+      <button class="btn-danger" onclick="confirmDelete()"><i class="fas fa-trash"></i> حذف</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE ALL CONFIRM -->
+<div class="modal-backdrop" id="del-all-modal">
+  <div class="modal confirm-modal">
+    <div class="confirm-icon"><i class="fas fa-skull"></i></div>
+    <h3>مسح جميع الفرص</h3>
+    <p>هل أنت متأكد من حذف <b>جميع</b> الفرص الاستثمارية؟ لا يمكن التراجع عن هذا الإجراء.</p>
+    <div style="display:flex;gap:10px;justify-content:center;padding-bottom:20px">
+      <button class="btn-cancel" onclick="closeDelAllModal()">إلغاء</button>
+      <button class="btn-danger" onclick="confirmDeleteAll()"><i class="fas fa-trash"></i> مسح الكل</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+
+
+<script type="module">
+import { getOpportunities, addOpportunity, updateOpportunity, deleteOpportunity, NEIGHBORHOODS, ACTIVITIES, ACTIVITY_COLORS } from './firebase-config.js';
+
+// ===== STATE =====
+let allData = [];
+
+// ===== AUTH =====
+const PASS = { admin: btoa('admin:1234') };
+
+function checkLogin(u, p) {
+  return PASS[u] && PASS[u] === btoa(`${u}:${p}`);
+}
+
+window.doLogin = function() {
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value;
+  if (checkLogin(u, p)) {
+    document.getElementById('login-wrap').classList.add('hide');
+    initDashboard();
+  } else {
+    document.getElementById('l-err').style.display = 'block';
+  }
+};
+
+window.doLogout = function() {
+  document.getElementById('login-wrap').classList.remove('hide');
+  document.getElementById('l-pass').value = '';
+  document.getElementById('l-err').style.display = 'none';
+};
+
+// ===== SIDEBAR =====
+
+window.showSection = function(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.ds-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('s-'+id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const titles = { overview:'نظرة عامة', opportunities:'الفرص الاستثمارية', reports:'التقارير' };
+  document.getElementById('topbar-title').textContent = titles[id] || id;
+  document.getElementById('topbar-badge').textContent = { overview:'الإحصائيات', opportunities:'إدارة الفرص', reports:'التحليلات' }[id] || '';
+  if (id === 'reports') renderReportCharts();
+};
+
+// ===== TABLE =====
+let currentPage = 1;
+const PER_PAGE = 8;
+let deleteTarget = null;
+
+function populateSelects() {
+  const actSel    = document.getElementById('m-activity');
+  const hoodSel   = document.getElementById('m-hood');
+  const filterSel = document.getElementById('tbl-filter-act');
+  ACTIVITIES.forEach(a => {
+    actSel.innerHTML    += `<option value="${a}">${a}</option>`;
+    filterSel.innerHTML += `<option value="${a}">${a}</option>`;
+  });
+  NEIGHBORHOODS.forEach(h => hoodSel.innerHTML += `<option value="${h}">${h}</option>`);
+}
+
+window.renderTable = function() {
+  const search    = document.getElementById('tbl-search').value.toLowerCase();
+  const actFilter = document.getElementById('tbl-filter-act').value;
+  let data = allData.filter(o =>
+    (!actFilter || o.activity === actFilter) &&
+    (!search || o.number.toLowerCase().includes(search) || o.neighborhood.includes(search) || o.activity.includes(search))
+  );
+  const pages = Math.ceil(data.length / PER_PAGE);
+  if (currentPage > pages) currentPage = Math.max(1, pages);
+  const slice = data.slice((currentPage-1)*PER_PAGE, currentPage*PER_PAGE);
+
+  const tbody = document.getElementById('opp-tbody');
+  tbody.innerHTML = slice.length ? slice.map((o, i) => {
+    const color = ACTIVITY_COLORS[o.activity] || '#888';
+    const sc = o.status === 'متاح' ? 'status-avail' : 'status-reserved';
+    return `<tr>
+      <td>${(currentPage-1)*PER_PAGE + i + 1}</td>
+      <td><b>${o.number}</b></td>
+      <td>${o.neighborhood}</td>
+      <td><span class="tbl-badge" style="background:${color}">${o.activity}</span></td>
+      <td>${o.area.toLocaleString()} م²</td>
+      <td>${o.duration}</td>
+      <td><span class="status-badge ${sc}">${o.status}</span></td>
+      <td>
+        <div class="tbl-actions">
+          <button class="tbl-btn edit" onclick="openModal('${o.id}')" title="تعديل"><i class="fas fa-pen"></i></button>
+          <button class="tbl-btn del"  onclick="openDelModal('${o.id}')" title="حذف"><i class="fas fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') : '<tr class="empty-row"><td colspan="8"><i class="fas fa-inbox"></i>لا توجد بيانات</td></tr>';
+
+  const pag = document.getElementById('pagination');
+  if (pages <= 1) { pag.innerHTML = ''; return; }
+  let html = '';
+  if (currentPage > 1) html += `<button class="page-btn" onclick="gotoPage(${currentPage-1})"><i class="fas fa-chevron-right"></i></button>`;
+  for (let p = 1; p <= pages; p++) html += `<button class="page-btn ${p===currentPage?'active':''}" onclick="gotoPage(${p})">${p}</button>`;
+  if (currentPage < pages) html += `<button class="page-btn" onclick="gotoPage(${currentPage+1})"><i class="fas fa-chevron-left"></i></button>`;
+  pag.innerHTML = html;
+};
+
+window.gotoPage = function(p) { currentPage = p; window.renderTable(); };
+
+// ===== MODAL =====
+window.openModal = function(id) {
+  if (id) {
+    const o = allData.find(x => x.id === id);
+    if (!o) return;
+    document.getElementById('modal-title').innerHTML = '<i class="fas fa-pen"></i> تعديل الفرصة';
+    document.getElementById('m-id').value        = o.id;
+    document.getElementById('m-number').value    = o.number;
+    document.getElementById('m-activity').value  = o.activity;
+    document.getElementById('m-hood').value      = o.neighborhood;
+    document.getElementById('m-area').value      = o.area;
+    document.getElementById('m-duration').value  = o.duration;
+    document.getElementById('m-docs').value      = o.docsPrice;
+    document.getElementById('m-announce').value  = o.announceDate;
+    document.getElementById('m-tender').value    = o.tenderDate;
+    document.getElementById('m-lat').value       = o.lat;
+    document.getElementById('m-lng').value       = o.lng;
+    document.getElementById('m-status').value    = o.status;
+    document.getElementById('m-desc').value      = o.description;
+    document.getElementById('m-link').value      = o.link || '';  // إصلاح: قيمة آمنة عند غياب الرابط
+
+  } else {
+    document.getElementById('modal-title').innerHTML = '<i class="fas fa-plus-circle"></i> إضافة فرصة جديدة';
+    document.getElementById('m-id').value       = '';
+    ['m-number','m-area','m-duration','m-docs','m-announce','m-tender','m-lat','m-lng','m-desc','m-link'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('m-activity').value = ACTIVITIES[0];
+    document.getElementById('m-hood').value     = NEIGHBORHOODS[0];
+    document.getElementById('m-status').value   = 'متاح';
+  }
+  document.getElementById('opp-modal').classList.add('show');
+};
+
+window.closeModal = function() { document.getElementById('opp-modal').classList.remove('show'); };
+
+window.saveOpp = async function() {
+  const id = document.getElementById('m-id').value;
+  const opp = {
+    number:       document.getElementById('m-number').value.trim(),
+    activity:     document.getElementById('m-activity').value,
+    neighborhood: document.getElementById('m-hood').value,
+    area:         parseFloat(document.getElementById('m-area').value) || 0,
+    duration:     document.getElementById('m-duration').value.trim(),
+    docsPrice:    parseFloat(document.getElementById('m-docs').value) || 0,
+    announceDate: document.getElementById('m-announce').value,
+    tenderDate:   document.getElementById('m-tender').value,
+    lat:          parseFloat(document.getElementById('m-lat').value) || 31.335,
+    lng:          parseFloat(document.getElementById('m-lng').value) || 37.360,
+    status:       document.getElementById('m-status').value,
+    description:  document.getElementById('m-desc').value.trim(),
+    link:         document.getElementById('m-link').value.trim()
+  };
+  if (!opp.number || !opp.area) { showToast('يرجى ملء الحقول المطلوبة', 'error'); return; }
+  try {
+    if (id) {
+      await updateOpportunity(id, opp);
+      const idx = allData.findIndex(o => o.id === id);
+      if (idx !== -1) allData[idx] = { ...allData[idx], ...opp };
+      showToast('تم تحديث الفرصة بنجاح');
+    } else {
+      const added = await addOpportunity(opp);
+      allData.push(added);
+      showToast('تمت إضافة الفرصة بنجاح');
+    }
+    window.closeModal();
+    window.renderTable();
+    updateOverview();
+    renderLatest();
+    renderOverviewCharts();
+  } catch(e) {
+    showToast('حدث خطأ أثناء الحفظ', 'error');
+  }
+};
+
+// ===== DELETE =====
+window.openDelModal  = function(id) { deleteTarget = id; document.getElementById('del-modal').classList.add('show'); };
+window.closeDelModal = function() { document.getElementById('del-modal').classList.remove('show'); deleteTarget = null; };
+window.confirmDelete = async function() {
+  if (!deleteTarget) return;
+  try {
+    await deleteOpportunity(deleteTarget);
+    allData = allData.filter(o => o.id !== deleteTarget);
+    showToast('تم حذف الفرصة', 'warning');
+    window.closeDelModal();
+    window.renderTable();
+    updateOverview();
+    renderLatest();
+    renderOverviewCharts();
+  } catch(e) {
+    showToast('حدث خطأ أثناء الحذف', 'error');
+  }
+};
+
+// ===== DELETE ALL =====
+window.openDelAllModal  = function() { document.getElementById('del-all-modal').classList.add('show'); };
+window.closeDelAllModal = function() { document.getElementById('del-all-modal').classList.remove('show'); };
+window.confirmDeleteAll = async function() {
+  try {
+    await Promise.all(allData.map(o => deleteOpportunity(o.id)));
+    allData = [];
+    showToast('تم مسح جميع الفرص', 'warning');
+    window.closeDelAllModal();
+    window.renderTable();
+    updateOverview();
+    renderLatest();
+    renderOverviewCharts();
+  } catch(e) {
+    showToast('حدث خطأ أثناء المسح', 'error');
+  }
+};
+
+// ===== OVERVIEW =====
+function updateOverview() {
+  document.getElementById('ov-total').textContent    = allData.length;
+  document.getElementById('ov-avail').textContent    = allData.filter(o => o.status === 'متاح').length;
+  document.getElementById('ov-reserved').textContent = allData.filter(o => o.status === 'محجوز').length;
+  const avg = allData.length ? Math.round(allData.reduce((s,o) => s+o.area, 0) / allData.length) : 0;
+  document.getElementById('ov-area').textContent     = avg.toLocaleString();
+}
+
+function renderLatest() {
+  document.getElementById('latest-tbody').innerHTML = allData.slice(-5).reverse().map(o => {
+    const color = ACTIVITY_COLORS[o.activity] || '#888';
+    const sc = o.status === 'متاح' ? 'status-avail' : 'status-reserved';
+    return `<tr>
+      <td><b>${o.number}</b></td><td>${o.neighborhood}</td>
+      <td><span class="tbl-badge" style="background:${color}">${o.activity}</span></td>
+      <td>${o.area.toLocaleString()} م²</td>
+      <td><span class="status-badge ${sc}">${o.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+let chartActivity, chartHood;
+function renderOverviewCharts() {
+  const data = allData;
+  const actCounts = {};
+  data.forEach(o => actCounts[o.activity] = (actCounts[o.activity]||0)+1);
+  if (chartActivity) chartActivity.destroy();
+  chartActivity = new Chart(document.getElementById('chart-activity'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(actCounts),
+      datasets: [{ data: Object.values(actCounts), backgroundColor: Object.keys(actCounts).map(a => ACTIVITY_COLORS[a]||'#888'), borderWidth: 2 }]
+    },
+    options: { plugins: { legend: { position:'bottom', labels:{ font:{ family:'Tajawal' } } } }, cutout:'55%' }
+  });
+  const hoodCounts = {};
+  data.forEach(o => hoodCounts[o.neighborhood] = (hoodCounts[o.neighborhood]||0)+1);
+  if (chartHood) chartHood.destroy();
+  chartHood = new Chart(document.getElementById('chart-hood'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(hoodCounts),
+      datasets: [{ label:'عدد الفرص', data: Object.values(hoodCounts), backgroundColor: '#1a5276', borderRadius: 6 }]
+    },
+    options: {
+      plugins: { legend: { display:false } },
+      scales: { x: { ticks: { font: { family:'Tajawal', size:11 } } }, y: { ticks: { font: { family:'Tajawal' } } } }
+    }
+  });
+}
+
+let chartArea, chartStatusHood;
+function renderReportCharts() {
+  const data = allData;
+  const actArea = {};
+  data.forEach(o => actArea[o.activity] = (actArea[o.activity]||0)+o.area);
+  if (chartArea) chartArea.destroy();
+  chartArea = new Chart(document.getElementById('chart-area'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(actArea),
+      datasets: [{ label:'المساحة الكلية (م²)', data:Object.values(actArea), backgroundColor: Object.keys(actArea).map(a => ACTIVITY_COLORS[a]||'#888'), borderRadius:6 }]
+    },
+    options: {
+      plugins:{ legend:{ display:false } },
+      scales:{ x:{ ticks:{ font:{ family:'Tajawal',size:11 } } }, y:{ ticks:{ font:{ family:'Tajawal' } } } }
+    }
+  });
+  const hoods = [...new Set(data.map(o => o.neighborhood))];
+  const avail = hoods.map(h => data.filter(o => o.neighborhood===h && o.status==='متاح').length);
+  const resv  = hoods.map(h => data.filter(o => o.neighborhood===h && o.status==='محجوز').length);
+  if (chartStatusHood) chartStatusHood.destroy();
+  chartStatusHood = new Chart(document.getElementById('chart-status-hood'), {
+    type:'bar',
+    data:{
+      labels:hoods,
+      datasets:[
+        { label:'متاح', data:avail, backgroundColor:'#27ae60', borderRadius:4 },
+        { label:'محجوز', data:resv, backgroundColor:'#f39c12', borderRadius:4 }
+      ]
+    },
+    options:{
+      plugins:{ legend:{ labels:{ font:{ family:'Tajawal' } } } },
+      scales:{ x:{ ticks:{ font:{ family:'Tajawal',size:11 } } }, y:{ ticks:{ font:{ family:'Tajawal' } } } }
+    }
+  });
+}
+
+// ===== TOAST =====
+function showToast(msg, type='success') {
+  const wrap = document.getElementById('toast-wrap');
+  const icons = { success:'fa-circle-check', error:'fa-circle-xmark', warning:'fa-triangle-exclamation' };
+  const t = document.createElement('div');
+  t.className = `toast ${type !== 'success' ? type : ''}`;
+  t.innerHTML = `<i class="fas ${icons[type]||icons.success}"></i> ${msg}`;
+  wrap.appendChild(t);
+  setTimeout(() => t.classList.add('show'), 50);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 3000);
+}
+
+// ===== INIT =====
+async function initDashboard() {
+  populateSelects();
+  try {
+    allData = await getOpportunities();
+    updateOverview();
+    renderLatest();
+    renderOverviewCharts();
+    window.renderTable();
+  } catch(e) {
+    showToast('تعذّر تحميل البيانات من Firebase', 'error');
+  }
+}
+
+document.getElementById('login-btn').addEventListener('click', window.doLogin);
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key === 'Enter') window.doLogin(); });
+
+document.getElementById('opp-modal').addEventListener('click', e => { if(e.target===e.currentTarget) window.closeModal(); });
+document.getElementById('del-modal').addEventListener('click', e => { if(e.target===e.currentTarget) window.closeDelModal(); });
+document.getElementById('del-all-modal').addEventListener('click', e => { if(e.target===e.currentTarget) window.closeDelAllModal(); });
+
+</script>
+</body>
+</html>

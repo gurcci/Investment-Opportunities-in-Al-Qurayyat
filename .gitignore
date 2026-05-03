@@ -1,0 +1,19 @@
+# ملفات النظام
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ملفات المحرر
+.vscode/
+.idea/
+*.suo
+*.user
+
+# ملفات مؤقتة
+*.log
+*.tmp
+
+# الملفات القديمة (.txt) - لا ترفعها
+index.txt
+dashboard.txt
+note.txt

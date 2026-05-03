@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>خريطة الفرص الاستثمارية - القريات</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo"><i class="fas fa-map-marked-alt"></i></div>
+  <div class="splash-title">خريطة الفرص الاستثمارية</div>
+  <div class="splash-sub">أمانة القريات - منطقة الجوف</div>
+  <div class="splash-stats">
+    <div class="splash-stat"><span class="num" id="s-count">0</span><span class="lbl">فرصة استثمارية</span></div>
+    <div class="splash-stat"><span class="num" id="s-hoods">0</span><span class="lbl">حي</span></div>
+    <div class="splash-stat"><span class="num" id="s-acts">0</span><span class="lbl">قطاع</span></div>
+  </div>
+  <div class="splash-bar-wrap"><div class="splash-bar" id="splash-bar"></div></div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="header-brand">
+    <i class="fas fa-map-marked-alt iiii"></i>
+    <div>
+      <img src="imge/غرفة القريات2.png" alt="شعار غرفة القريات" style="width:130px;height:50px;">
+      <img src="imge/logo3.png" alt="شعار" style="width:70px;height:50px;">
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-inner" id="sidebar-inner">
+
+      <!-- filters -->
+      <div class="filter-section">
+        <h3><i class="fas fa-filter"></i> خيارات البحث والفلترة</h3>
+        <div class="form-group">
+          <label>الحي</label>
+          <select class="form-control" id="f-hood"><option value="">الكل</option></select>
+        </div>
+        <div class="form-group">
+          <label>النشاط</label>
+          <select class="form-control" id="f-activity"><option value="">الكل</option></select>
+        </div>
+        <div class="form-group">
+          <label>الحالة</label>
+          <select class="form-control" id="f-status">
+            <option value="">الكل</option>
+            <option value="متاح">متاح</option>
+            <option value="محجوز">محجوز</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>المساحة (م²)</label>
+          <div class="range-wrap">
+            <input type="number" class="form-control" id="f-min" placeholder="من">
+            <input type="number" class="form-control" id="f-max" placeholder="إلى">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="applyFilters()"><i class="fas fa-search"></i> بحث</button>
+          <button class="btn btn-outline" onclick="resetFilters()"><i class="fas fa-redo"></i> إعادة</button>
+        </div>
+      </div>
+
+      <!-- results -->
+      <div class="results-header">
+        <h3><i class="fas fa-list"></i> الفرص المتاحة</h3>
+        <span class="results-count" id="res-count">0</span>
+      </div>
+      <div id="opp-list"></div>
+
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map"></div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend" id="legend">
+  <h4><i class="fas fa-circle-dot"></i> الأنشطة</h4>
+  <div id="legend-items"></div>
+</div>
+
+<!-- FABs -->
+<div class="fab-wrap">
+  <button class="fab fab-primary" onclick="fitBounds()" title="عرض الكل"><i class="fas fa-expand"></i></button>
+</div>
+
+
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script type="module">
+import { getOpportunities, addOpportunity, updateOpportunity, deleteOpportunity, NEIGHBORHOODS, ACTIVITIES, ACTIVITY_COLORS } from './firebase-config.js';
+
+// ===== MAP =====
+const map = L.map('map', { zoomControl: false }).setView([31.335, 37.360], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(map);
+L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+let markers = [];
+let currentData = [];
+let allData = [];
+
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function createIcon(activity) {
+  const color = ACTIVITY_COLORS[activity] || '#888';
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:34px;height:34px;border-radius:50% 50% 50% 0;background:${color};transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,0.3);"></div>`,
+    iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -38]
+  });
+}
+
+function buildPopup(o) {
+  const color = ACTIVITY_COLORS[o.activity] || '#888';
+  const statusColor = o.status === 'متاح' ? '#27ae60' : '#e74c3c';
+  const safeLink = o.link ? escapeHtml(o.link) : '#';
+  return `
+    <div>
+      <div class="popup-header" style="background:${color}">
+        <h3>${escapeHtml(o.activity)} - ${escapeHtml(o.neighborhood)}</h3>
+        <p>${escapeHtml(o.number)}</p>
+      </div>
+      <div class="popup-body">
+        <div class="popup-row"><span class="k">المساحة</span><span class="v">${Number(o.area).toLocaleString()} م²</span></div>
+        <div class="popup-row"><span class="k">مدة العقد</span><span class="v">${escapeHtml(o.duration)}</span></div>
+        <div class="popup-row"><span class="k">سعر الكراسة</span><span class="v">${escapeHtml(String(o.docsPrice))} ر.س</span></div>
+        <div class="popup-row"><span class="k">تاريخ الإعلان</span><span class="v">${escapeHtml(o.announceDate)}</span></div>
+        <div class="popup-row"><span class="k">فتح المظاريف</span><span class="v">${escapeHtml(o.tenderDate)}</span></div>
+        <div class="popup-row"><span class="k">الحالة</span><span class="v" style="color:${statusColor}">● ${escapeHtml(o.status)}</span></div>
+        <p class="popup-desc">${escapeHtml(o.description)}</p>
+      </div>
+      <div class="popup-actions">
+        <a href="https://wa.me/?text=${encodeURIComponent('فرصة استثمارية: '+o.activity+' - '+o.neighborhood+' - '+o.area+'م²')}"
+           target="_blank" rel="noopener noreferrer" class="popup-btn green"><i class="fab fa-whatsapp"></i> مشاركة</a>
+        <a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="popup-btn primary"><i class="fas fa-external-link-alt"></i> تفاصيل</a>
+      </div>
+    </div>`;
+}
+
+function renderMarkers(data) {
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  data.forEach(o => {
+    const m = L.marker([o.lat, o.lng], { icon: createIcon(o.activity) })
+      .bindPopup(buildPopup(o), { maxWidth: 320 })
+      .addTo(map);
+    m.oppId = o.id;
+    markers.push(m);
+  });
+}
+
+function updateResultsCount(data) {
+  document.getElementById('res-count').innerHTML = data.length;
+}
+
+window.focusOpp = function(id) {
+  const o = currentData.find(x => x.id === id);
+  if (!o) return;
+  map.flyTo([o.lat, o.lng], 16, { duration: 0.8 });
+  const m = markers.find(m => m.oppId === id);
+  if (m) setTimeout(() => m.openPopup(), 900);
+  document.querySelectorAll('.opp-card').forEach(c => c.classList.remove('active'));
+  const card = document.getElementById('card-'+id);
+  if (card) { card.classList.add('active'); card.scrollIntoView({ behavior:'smooth', block:'nearest' }); }
+};
+
+// ===== FILTERS =====
+function populateFilters() {
+  const hoodSel = document.getElementById('f-hood');
+  const actSel  = document.getElementById('f-activity');
+  NEIGHBORHOODS.forEach(h => hoodSel.innerHTML += `<option value="${h}">${h}</option>`);
+  ACTIVITIES.forEach(a => actSel.innerHTML += `<option value="${a}">${a}</option>`);
+}
+
+window.applyFilters = function() {
+  const hood = document.getElementById('f-hood').value;
+  const act  = document.getElementById('f-activity').value;
+  const stat = document.getElementById('f-status').value;
+  const min  = parseFloat(document.getElementById('f-min').value) || 0;
+  const max  = parseFloat(document.getElementById('f-max').value) || Infinity;
+  currentData = allData.filter(o =>
+    (!hood || o.neighborhood === hood) &&
+    (!act  || o.activity === act) &&
+    (!stat || o.status === stat) &&
+    o.area >= min && o.area <= max
+  );
+  updateResultsCount(currentData);
+  renderMarkers(currentData);
+};
+
+window.resetFilters = function() {
+  ['f-hood','f-activity','f-status'].forEach(id => document.getElementById(id).value = '');
+  ['f-min','f-max'].forEach(id => document.getElementById(id).value = '');
+  window.applyFilters();
+};
+
+// ===== MAP CONTROLS =====
+window.fitBounds = function() {
+  if (markers.length) map.fitBounds(L.featureGroup(markers).getBounds().pad(0.1));
+};
+
+// ===== LEGEND =====
+function buildLegend() {
+  const wrap = document.getElementById('legend-items');
+  Object.entries(ACTIVITY_COLORS).forEach(([name, color]) => {
+    wrap.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${color}"></div><span style="font-size:12px">${name}</span></div>`;
+  });
+}
+
+// ===== SPLASH =====
+function hideSplash() {
+  const el = document.getElementById('splash');
+  if (!el) return;
+  el.classList.add('hide');
+  setTimeout(() => el.remove(), 600);
+}
+
+function startSplash() {
+  setTimeout(() => { document.getElementById('splash-bar').style.width = '100%'; }, 100);
+  setTimeout(hideSplash, 2400);
+}
+
+// ===== INIT =====
+populateFilters();
+buildLegend();
+startSplash();
+
+// ===== DATA =====
+getOpportunities().then(data => {
+  allData = data;
+  currentData = data;
+
+  const sc = document.getElementById('s-count');
+  const sh = document.getElementById('s-hoods');
+  const sa = document.getElementById('s-acts');
+  if (sc) sc.textContent = data.length;
+  if (sh) sh.textContent = [...new Set(data.map(o => o.neighborhood))].length;
+  if (sa) sa.textContent = [...new Set(data.map(o => o.activity))].length;
+  renderMarkers(data);
+  updateResultsCount(data);
+  setTimeout(window.fitBounds, 300);
+}).catch(err => {
+  console.error('خطأ في تحميل البيانات:', err);
+  document.getElementById('splash').innerHTML = '<div style="color:#fff;font-size:18px;text-align:center"><i class="fas fa-exclamation-triangle" style="font-size:48px;display:block;margin-bottom:16px"></i>تعذّر الاتصال بقاعدة البيانات<br><small style="opacity:0.7">تحقق من الإنترنت أو إعدادات Firebase</small></div>';
+});
+
+</script>
+</body>
+</html>
