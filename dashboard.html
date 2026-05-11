@@ -474,6 +474,10 @@
             <option value="محجوز">محجوز</option>
           </select>
         </div>
+        <div class="field-group">
+          <label>الجهة</label>
+          <input type="text" id="m-who" placeholder="الجهـة المالكـة أو المـستـفيدة من الفــرصة">
+        </div> 
         <div class="field-group full">
           <label>وصف الفرصة</label>
           <textarea id="m-desc" placeholder="وصف تفصيلي للفرصة الاستثمارية..."></textarea>
@@ -644,6 +648,7 @@ window.openModal = function(id) {
     document.getElementById('m-status').value    = o.status;
     document.getElementById('m-desc').value      = o.description;
     document.getElementById('m-link').value      = o.link || '';  // إصلاح: قيمة آمنة عند غياب الرابط
+    document.getElementById('m-who').value       = o.who || '';   // إصلاح: قيمة آمنة عند غياب الجهة
 
   } else {
     document.getElementById('modal-title').innerHTML = '<i class="fas fa-plus-circle"></i> إضافة فرصة جديدة';
@@ -673,7 +678,8 @@ window.saveOpp = async function() {
     lng:          parseFloat(document.getElementById('m-lng').value) || 37.360,
     status:       document.getElementById('m-status').value,
     description:  document.getElementById('m-desc').value.trim(),
-    link:         document.getElementById('m-link').value.trim()
+    link:         document.getElementById('m-link').value.trim(),
+    who:          document.getElementById('m-who').value.trim()
   };
   if (!opp.number || !opp.area) { showToast('يرجى ملء الحقول المطلوبة', 'error'); return; }
   try {
