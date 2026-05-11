@@ -92,8 +92,7 @@
 
 <!-- LEGEND -->
 <div class="legend" id="legend">
-  <h4><i class="fas fa-circle-dot"></i> الأنشطة</h4>
-  <div id="legend-items"></div>
+  <h4><i class="fas fa-circle-dot"></i> الأنشطة ||</h4>
 </div>
 
 <!-- FABs -->
@@ -228,7 +227,7 @@ window.fitBounds = function() {
 
 // ===== LEGEND =====
 function buildLegend() {
-  const wrap = document.getElementById('legend-items');
+  const wrap = document.getElementById('legend');
   Object.entries(ACTIVITY_COLORS).forEach(([name, color]) => {
     wrap.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${color}"></div><span style="font-size:12px">${name}</span></div>`;
   });
