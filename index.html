@@ -151,8 +151,10 @@ function buildPopup(o) {
         <div class="popup-row"><span class="k">تاريخ الإعلان</span><span class="v">${escapeHtml(o.announceDate)}</span></div>
         <div class="popup-row"><span class="k">فتح المظاريف</span><span class="v">${escapeHtml(o.tenderDate)}</span></div>
         <div class="popup-row"><span class="k">الحالة</span><span class="v" style="color:${statusColor}">● ${escapeHtml(o.status)}</span></div>
+        <div class="popup-row"><span class="k">الجهة</span><span class="v">${escapeHtml(o.who)}</span></div>
         <p class="popup-desc">${escapeHtml(o.description)}</p>
       </div>
+      
       <div class="popup-actions">
         <a href="https://wa.me/?text=${encodeURIComponent('فرصة استثمارية: '+o.activity+' - '+o.neighborhood+' - '+o.area+'م²')}"
            target="_blank" rel="noopener noreferrer" class="popup-btn green"><i class="fab fa-whatsapp"></i> مشاركة</a>
