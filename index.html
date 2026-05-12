@@ -156,13 +156,14 @@ function buildPopup(o) {
       </div>
       
       <div class="popup-actions">
-        <a href="https://wa.me/?text=${encodeURIComponent('فرصة استثمارية: '+o.activity+' - '+o.neighborhood+' - '+o.area+'م²')}"
-           target="_blank" rel="noopener noreferrer" class="popup-btn green"><i class="fab fa-whatsapp"></i> مشاركة</a>
-        <a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="popup-btn primary"><i class="fas fa-external-link-alt"></i> تفاصيل</a>
+        <a href="https://wa.me/?text=${encodeURIComponent('فرصة استثمارية: '+o.activity+' - '+o.neighborhood+' - '+o.area+'م²\n المزيد من التفصيل: '+safeLink)}"
+          target="_blank" rel="noopener noreferrer" class="popup-btn green"><i class="fab fa-whatsapp"></i> مشاركة</a>
+        
+          <a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="popup-btn primary"><i class="fas fa-external-link-alt"></i> تفاصيل</a>
       </div>
     </div>`;
-}
 
+}
 function renderMarkers(data) {
   markers.forEach(m => map.removeLayer(m));
   markers = [];
