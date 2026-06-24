@@ -525,20 +525,42 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script type="module">
-import { getOpportunities, addOpportunity, updateOpportunity, deleteOpportunity, NEIGHBORHOODS, ACTIVITIES, ACTIVITY_COLORS } from './firebase-config.js';
+import {
+  auth,
+  signInWithEmailAndPassword,
+  getOpportunities,
+  addOpportunity,
+  updateOpportunity,
+  deleteOpportunity,
+  NEIGHBORHOODS,
+  ACTIVITIES,
+  ACTIVITY_COLORS
+} from './firebase-config.js';
 
 // ===== STATE =====
 let allData = [];
 
 // ===== AUTH =====
-window.loginDashboard = function() {
-  const user = document.getElementById('l-user').value.trim();
-  const pass = document.getElementById('l-pass').value.trim();
-  if (user === 'adam' && pass === '13579@@##') {
+window.loginDashboard = async function() {
+
+  const email = document.getElementById('l-user').value.trim();
+  const password = document.getElementById('l-pass').value.trim();
+
+  console.log("EMAIL =", email);
+
+  try {
+    await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
     document.getElementById('login-wrap').classList.add('hide');
-    loadData();
-  } else {
+    document.getElementById('l-err').style.display = 'none';
+    await initDashboard();
+  } catch (error) {
+    console.error(error);
     document.getElementById('l-err').style.display = 'block';
+
   }
 };
 
@@ -691,6 +713,8 @@ window.saveOpp = async function() {
     renderLatest();
     renderOverviewCharts();
   } catch(e) {
+    console.error(e);
+    alert(e.message);
     showToast('حدث خطأ أثناء الحفظ', 'error');
   }
 };
@@ -856,3 +880,11 @@ document.getElementById('del-all-modal').addEventListener('click', e => { if(e.t
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+ تلرلاهعهخ اه 88

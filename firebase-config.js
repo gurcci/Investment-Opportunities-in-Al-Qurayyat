@@ -1,3 +1,9 @@
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -12,6 +18,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+const auth = getAuth(app);
 
 const COLL = "opportunities";
 
@@ -77,4 +84,14 @@ const ACTIVITY_COLORS = {
   "زراعي":"#27ae60","خدمي":"#e67e22","تعليمي":"#3498db","ترفيهي":"#f39c12"
 };
 
-export { getOpportunities, addOpportunity, updateOpportunity, deleteOpportunity, NEIGHBORHOODS, ACTIVITIES, ACTIVITY_COLORS };
+export {
+  auth,
+  signInWithEmailAndPassword,
+  getOpportunities,
+  addOpportunity,
+  updateOpportunity,
+  deleteOpportunity,
+  NEIGHBORHOODS,
+  ACTIVITIES,
+  ACTIVITY_COLORS
+};
