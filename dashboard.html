@@ -282,7 +282,7 @@
       <label>كلمة المرور</label>
       <input type="password" id="l-pass" autocomplete="current-password">
     </div>
-    <button class="login-btn" id="login-btn"><i class="fas fa-sign-in-alt"></i> دخول</button>
+    <button class="login-btn" onclick="loginDashboard()"><i class="fas fa-sign-in-alt"></i>دخول</button>
     <div class="login-err" id="l-err"><i class="fas fa-exclamation-circle"></i> اسم المستخدم أو كلمة المرور غير صحيحة</div>
   </div>
 </div>
@@ -524,8 +524,6 @@
 <!-- TOAST -->
 <div class="toast-wrap" id="toast-wrap"></div>
 
-
-
 <script type="module">
 import { getOpportunities, addOpportunity, updateOpportunity, deleteOpportunity, NEIGHBORHOODS, ACTIVITIES, ACTIVITY_COLORS } from './firebase-config.js';
 
@@ -533,18 +531,12 @@ import { getOpportunities, addOpportunity, updateOpportunity, deleteOpportunity,
 let allData = [];
 
 // ===== AUTH =====
-const PASS = { admin: btoa('admin:1234') };
-
-function checkLogin(u, p) {
-  return PASS[u] && PASS[u] === btoa(`${u}:${p}`);
-}
-
-window.doLogin = function() {
-  const u = document.getElementById('l-user').value.trim();
-  const p = document.getElementById('l-pass').value;
-  if (checkLogin(u, p)) {
+window.loginDashboard = function() {
+  const user = document.getElementById('l-user').value.trim();
+  const pass = document.getElementById('l-pass').value.trim();
+  if (user === 'adam' && pass === '13579@@##') {
     document.getElementById('login-wrap').classList.add('hide');
-    initDashboard();
+    loadData();
   } else {
     document.getElementById('l-err').style.display = 'block';
   }
@@ -855,8 +847,7 @@ async function initDashboard() {
   }
 }
 
-document.getElementById('login-btn').addEventListener('click', window.doLogin);
-document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key === 'Enter') window.doLogin(); });
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key === 'Enter') window.loginDashboard(); });
 
 document.getElementById('opp-modal').addEventListener('click', e => { if(e.target===e.currentTarget) window.closeModal(); });
 document.getElementById('del-modal').addEventListener('click', e => { if(e.target===e.currentTarget) window.closeDelModal(); });
